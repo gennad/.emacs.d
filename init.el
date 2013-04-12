@@ -69,10 +69,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(bmkp-last-as-first-bookmark-file "~/.emacs.bmk")
  '(custom-safe-themes (quote ("085b401decc10018d8ed2572f65c5ba96864486062c0a2391372223294f89460" "d2622a2a2966905a5237b54f35996ca6fda2f79a9253d44793cfe31079e3c92b" "71b172ea4aad108801421cc5251edb6c792f3adbaecfa1c52e94e3d99634dee7" default)))
  '(desktop-save-mode t nil (desktop))
  '(ecb-options-version "2.40")
  '(ediff-split-window-function (quote split-window-horizontally))
+ '(evil-search-module (quote evil-search))
  '(org-agenda-files (quote ("~/org/1.org")))
  '(save-place t nil (saveplace)))
 
@@ -785,4 +787,14 @@ message-mode text-mode))
 (add-hook 'python-mode-hook 'projectile-on)
 
 ; Jedi
+(setq jedi:setup-keys t)
 (add-hook 'python-mode-hook 'jedi:setup)
+
+
+; Emacs workspaces
+;(global-set-key "\C-xg" 'workspace-goto)
+
+(global-set-key (kbd "C-S-f") 'find-file-in-project)
+
+
+(require 'grep+)
