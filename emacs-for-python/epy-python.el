@@ -1,7 +1,7 @@
 ;; epy-python.el - setup of python stuff
 
 ;; fgallina/python.el
-(require 'python (concat epy-install-dir "extensions/python.el"))
+;;(require 'python (concat epy-install-dir "extensions/python.el"))
 
 
 (defun setup-ropemacs ()
