@@ -108,7 +108,7 @@ The CMDLINE should be something like:
      ;;==================================================
      ;; Ropemacs Configuration
      ;;==================================================
-     (setup-ropemacs)
+     ;;(setup-ropemacs)
 
      ;;==================================================
      ;; Virtualenv Commands

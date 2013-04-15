@@ -1,3 +1,4 @@
+(setq ipython-command "/usr/bin/ipython")
 (package-initialize)
 
 ; No toolbar in full screen
@@ -124,12 +125,10 @@ Uses `vc.el' or `rcs.el' depending on `ediff-version-control-package'."
 (global-set-key [f6] 'compile)
 (setq compilation-ask-about-save nil)
 
-
 ;; Set font
 (load-theme 'zenburn t)
 (set-face-attribute 'default nil :height 145 :weight 'normal)
 (set-default-font "Inconsolata-18")
-
 
 (defun toggle-window-split ()
   (interactive)
@@ -207,27 +206,6 @@ Uses `vc.el' or `rcs.el' depending on `ediff-version-control-package'."
 
 ; Cmd as meta key. Also, need to set caps lock as C system-wide.
 (setq mac-command-modifier 'control)
-;;(setq mac-control-modifier 'meta)
-;;(setq mac-command-modifier 'meta)
-;; (setq mac-option-key-is-meta nil)
-;; (setq mac-command-key-is-meta t)
-;; (setq mac-option-modifier nil)
-; Shell - Mx eshell
-; M-y to yank in isearch
-
-
-; C-M-f go to bracket closing or string end.
-
-;; (defun my-horizontal-recenter ()
-;;   "make the point horizontally centered in the window"
-;;   (interactive)
-;;   (let ((mid (/ (window-width) 2))
-;;         (line-len (save-excursion (end-of-line) (current-column)))
-;;         (cur (current-column)))
-;;     (if (< mid cur)
-;;         (set-window-hscroll (selected-window)
-;;                             (- cur mid)))))
-;; (global-set-key (kbd "C-M-l") 'my-horizontal-recenter)
 
 
 ; Registers: C-x r s <reg> - save and C-x r i <reg> to insert
@@ -244,67 +222,63 @@ Uses `vc.el' or `rcs.el' depending on `ediff-version-control-package'."
 
 ; Back C-x o
 (defun back-window ()
-  (interactive)
-  (other-window -1))
+    (interactive)
+    (other-window -1))
 (global-set-key (kbd "C-x O") 'back-window)
 
 (setq calendar-week-start-day 1)
 
-;; (global-set-key (kbd "C-c <tab>") 'imenu)
 (setq python-imenu-make-tree nil)
 (setq python-imenu-include-defun-type nil)
 
+(require 'etags) ;; provides `find-tag-default' in Emacs 21.
 
+(defun isearch-yank-regexp (regexp)
+  "Pull REGEXP into search regexp."
+  (let ((isearch-regexp nil)) ;; Dynamic binding of global.
+    (isearch-yank-string regexp))
+  (isearch-search-and-update))
 
+(defun isearch-yank-symbol (&optional partialp)
+  "Put symbol at current point into search string.
 
-  (require 'etags) ;; provides `find-tag-default' in Emacs 21.
+If PARTIALP is non-nil, find all partial matches."
+  (interactive "P")
+  (let* ((sym (find-tag-default))
+         ;; Use call of `re-search-forward' by `find-tag-default' to
+         ;; retrieve the end point of the symbol.
+         (sym-end (match-end 0))
+         (sym-start (- sym-end (length sym))))
+    (if (null sym)
+        (message "No symbol at point")
+      (goto-char sym-start)
+      ;; For consistent behavior, restart Isearch from starting point
+      ;; (or end point if using `isearch-backward') of symbol.
+      (isearch-search)
+      (if partialp
+          (isearch-yank-string sym)
+        (isearch-yank-regexp
+         (concat "\\_<" (regexp-quote sym) "\\_>"))))))
 
-  (defun isearch-yank-regexp (regexp)
-    "Pull REGEXP into search regexp."
-    (let ((isearch-regexp nil)) ;; Dynamic binding of global.
-      (isearch-yank-string regexp))
-    (isearch-search-and-update))
+(defun isearch-current-symbol (&optional partialp)
+  "Incremental search forward with symbol under point.
 
-  (defun isearch-yank-symbol (&optional partialp)
-    "Put symbol at current point into search string.
+Prefixed with \\[universal-argument] will find all partial
+matches."
+  (interactive "P")
+  (let ((start (point)))
+    (isearch-forward-regexp nil 1)
+    (isearch-yank-symbol partialp)))
 
-  If PARTIALP is non-nil, find all partial matches."
-    (interactive "P")
-    (let* ((sym (find-tag-default))
-	   ;; Use call of `re-search-forward' by `find-tag-default' to
-	   ;; retrieve the end point of the symbol.
-	   (sym-end (match-end 0))
-	   (sym-start (- sym-end (length sym))))
-      (if (null sym)
-	  (message "No symbol at point")
-	(goto-char sym-start)
-	;; For consistent behavior, restart Isearch from starting point
-	;; (or end point if using `isearch-backward') of symbol.
-	(isearch-search)
-	(if partialp
-	    (isearch-yank-string sym)
-	  (isearch-yank-regexp
-	   (concat "\\_<" (regexp-quote sym) "\\_>"))))))
+(defun isearch-backward-current-symbol (&optional partialp)
+  "Incremental search backward with symbol under point.
 
-  (defun isearch-current-symbol (&optional partialp)
-    "Incremental search forward with symbol under point.
-
-  Prefixed with \\[universal-argument] will find all partial
-  matches."
-    (interactive "P")
-    (let ((start (point)))
-      (isearch-forward-regexp nil 1)
-      (isearch-yank-symbol partialp)))
-
-  (defun isearch-backward-current-symbol (&optional partialp)
-    "Incremental search backward with symbol under point.
-
-  Prefixed with \\[universal-argument] will find all partial
-  matches."
-    (interactive "P")
-    (let ((start (point)))
-      (isearch-backward-regexpnil 1)
-      (isearch-yank-symbol partialp)))
+Prefixed with \\[universal-argument] will find all partial
+matches."
+  (interactive "P")
+  (let ((start (point)))
+    (isearch-backward-regexpnil 1)
+    (isearch-yank-symbol partialp)))
 
 
 (global-set-key "\C-x\C-\\" 'goto-last-change)
@@ -363,8 +337,10 @@ Uses `vc.el' or `rcs.el' depending on `ediff-version-control-package'."
 
 ; C-n, C-p for autocomplete
 (yas/global-mode 1)
+
 (require 'auto-complete-config)
 (ac-config-default)
+
 (setq ac-use-menu-map t)
 (define-key ac-menu-map "\C-n" 'ac-next)
 (define-key ac-menu-map "\C-p" 'ac-previous)
@@ -389,25 +365,10 @@ message-mode text-mode))
 
 
 
-
-
-;;(add-to-list 'load-path "~/.emacs.d/plugins/yasnippet")
-;;(require 'yasnippet)
-
 ;;(global-set-ke (kbd "C-i") 'yas/expand)
 ;;(setq yas/also-auto-indent-first-line t)
 ;;(add-to-list 'load-path "~/.emacs.d/plugins/autocomplete/")
 ;;(add-to-list 'ac-dictionary-directories "~/.emacs.d/plugins/autocomplete/ac-dict")
-
-
-;; (defun undo-line ()
-;;   "Like C-u in bash"
-;;   (interactive)
-;;   (move-beginning-of-line 1)
-;;   (kill-line)
-;;   (kill-line)
-;; )
-;; (global-set-key (kbd "C-u") 'undo-line)
 
 ;;(add-to-list 'load-path "/usr/local/Cellar/emacs/24.2/Emacs.app/Contents/share/emacs/site-lisp/w3m")
 ;;(require 'w3m-load)
@@ -429,22 +390,12 @@ message-mode text-mode))
 
 
 ; Smex
-(require 'smex) ; Not needed if you use package.el
 (smex-initialize) ; Can be omitted. This might cause a (minimal) delay
                   ; when Smex is auto-initialized on its first run.
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "M-X") 'smex-major-mode-commands)
 ;; This is your old M-x.
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
-
-
-; Switch between 2 buffers
-(defun switch-to-previous-buffer ()
-      (interactive)
-      (switch-to-buffer (other-buffer (current-buffer) 1)))
-(global-set-key (kbd "M-[") 'switch-to-previous-buffer)
-(global-set-key (kbd "M-]") 'other-window)
-
 
 ;; (add-to-list 'load-path "~/.emacs.d/org-caldav")
 ;; (require org-caldav)
@@ -463,19 +414,6 @@ message-mode text-mode))
 ;; Call `org-caldav-sync' to start the sync. The URL package will ask
 ;; you for username/password for accessing the calendar.
 
-
-(defun select-current-word ()
-"Select the word under cursor.
-“word” here is considered any alphanumeric sequence with “_” or “-”."
- (interactive)
- (let (pt)
-   (skip-chars-backward "-_A-Za-z0-9")
-   (setq pt (point))
-   (skip-chars-forward "-_A-Za-z0-9")
-   (set-mark pt)
-   (kill-ring-save pt (point))
- ))
-;;(global-set-key (kbd "C-c SPC") 'select-current-word)
 
 (global-auto-highlight-symbol-mode t)
 
@@ -508,32 +446,6 @@ message-mode text-mode))
 ;; (global-set-key "\M-f" 'next-word)
 
 
-(defun kill-whole-word ()
-  "Removes a word under the cursor."
-  (interactive)
-  (setq myBoundaries (bounds-of-thing-at-point 'symbol))
-  ;; get the beginning and ending positions
-  (setq p1 (car myBoundaries))
-  (setq p2 (cdr myBoundaries))
-  ;; grab it
-  (setq myStr (buffer-substring-no-properties p1 p2))
-  ;; delete region
-  (delete-region p1 p2)
-)
-(global-set-key (kbd "C-M-d") 'kill-whole-word)
-
-
-(defun newca ()
-  (interactive)
-  (setq p1 (point))
-  (back-to-indentation)
-  (if (= p1 (point))
-      (beginning-of-line nil)
-  )
-)
-(global-set-key (kbd "C-a") 'newca)
-
-
 (defun newcw ()
   (interactive)
   (if (not (equal mark-active nil))
@@ -555,15 +467,13 @@ message-mode text-mode))
 (autoload 'idomenu "idomenu" nil t)
 (global-set-key (kbd "C-c <tab>") 'idomenu)
 
-(global-set-key (kbd "C-M-u") 'universal-argument)
+(global-set-key (kbd "C-S-u") 'universal-argument)
 
 (global-set-key (kbd "C-x f") 'find-file-in-project)
 
 
 ;; (setq auto-completion-min-chars 4)
 ;; (setq ac-auto-start 4)
-
-(require 'virtualenv)
 
 
 (ac-set-trigger-key "TAB")
@@ -586,26 +496,7 @@ message-mode text-mode))
 (global-set-key (kbd "C-/") 'comment-dwim-line)
 
 
-
-
-
-
-
-;; ; diff faces
-;; (add-hook 'diff-mode-hook
-;;           (lambda ()
-;;             (set-face-foreground 'diff-header "#f8f8f8") ; italics
-;;             (set-face-background 'diff-header "#0e2231")
-;;             (set-face-background 'diff-file-header "#0e2231")
-;;             (set-face-foreground 'diff-added "#f8f8f8")
-;;             (set-face-background 'diff-added "#253b22")
-;;             (set-face-foreground 'diff-changed "#f8f8f8")
-;;             (set-face-background 'diff-changed "#4a410d")
-;;             (set-face-foreground 'diff-context "#f8f8f8")
-;;             (set-face-foreground 'diff-removed "#f8f8f8")
-;;             (set-face-background 'diff-removed "#420e09")))
-
-; ediff faces
+; Ediff faces
 (add-hook 'ediff-load-hook
           (lambda ()
             ;; (set-face-foreground ediff-current-diff-face-A nil)
@@ -639,7 +530,6 @@ message-mode text-mode))
 (setq explicit-shell-file-name "/usr/local/bin/fish")
 
 
-
 (defun my-isearch-buffers ()
   "isearch multiple buffers."
   (interactive)
@@ -655,9 +545,6 @@ message-mode text-mode))
 (global-set-key (kbd "M-g") 'recenter-top-bottom)
 
 
-
-
-
 ;; (global-set-key (kbd "C-c v") (kbd "C-x 2 C-x 0 C-u - 1 C-x o"))
 (defun halve-other-window-height ()
   "Expand current window to use half of the other window's lines."
@@ -671,9 +558,7 @@ message-mode text-mode))
 
 
 ;; Evil mode
-;; (add-to-list 'load-path "~/.emacs.d/evil")
 (setq evil-want-C-u-scroll t)
-;; (require 'evil)
 (evil-mode 1)
 (setq evil-auto-indent t)
 (setq evil-shift-width 4)
@@ -702,11 +587,6 @@ message-mode text-mode))
 
 ; Remap kill-buffer
 (global-set-key (kbd "C-c k") 'kill-buffer)
-
-
-;; Reserved
-;; (global-set-key (kbd "C-x SPC") 'other-window)
-
 
 ;; Try to fix fish emacs rgrep
 (grep-compute-defaults)
@@ -754,9 +634,6 @@ message-mode text-mode))
 (require 'semantic/sb)
 (semantic-mode 1)
 
-;;(setq ipython-command "/usr/bin/ipython")
-;;(defvaralias 'py-mode-map 'python-mode-map)
-
 ; Ecb
 (add-to-list 'load-path "~/.emacs.d/ecb/")
 (require 'ecb)
@@ -789,12 +666,25 @@ message-mode text-mode))
 ; Jedi
 (setq jedi:setup-keys t)
 (add-hook 'python-mode-hook 'jedi:setup)
-
+(setq jedi:complete-on-dot t)
 
 ; Emacs workspaces
 ;(global-set-key "\C-xg" 'workspace-goto)
 
 (global-set-key (kbd "C-S-f") 'find-file-in-project)
 
-
 (require 'grep+)
+
+
+; Comment
+(global-set-key (kbd "C-:") 'comment-dwim-line)
+
+
+(add-hook 'python-mode-hook 'my-python-customizations)
+
+(defun my-python-customizations ()
+    (define-key evil-normal-state-map " " 'jedi:goto-definition)
+    (define-key evil-normal-state-map [backspace] 'pop-global-mark)
+    (define-key python-mode-map (kbd "C-c C-d") 'add-docstring)
+    (define-key python-mode-map (kbd "<tab>") 'jedi:complete)
+)
