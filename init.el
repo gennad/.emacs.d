@@ -75,6 +75,7 @@
  '(desktop-save-mode t nil (desktop))
  '(ecb-options-version "2.40")
  '(ediff-split-window-function (quote split-window-horizontally))
+ '(ediff-window-setup-function (quote ediff-setup-windows-plain))
  '(evil-search-module (quote evil-search))
  '(org-agenda-files (quote ("~/org/1.org")))
  '(save-place t nil (saveplace)))
@@ -527,7 +528,6 @@ message-mode text-mode))
             ))
 
 
-(setq explicit-shell-file-name "/usr/local/bin/fish")
 
 
 (defun my-isearch-buffers ()
@@ -638,20 +638,20 @@ message-mode text-mode))
 (add-to-list 'load-path "~/.emacs.d/ecb/")
 (require 'ecb)
 
+; Fix evil-mode with ecb
 (add-hook 'ecb-history-buffer-after-create-hook 'evil-emacs-state)
-  (add-hook 'ecb-directories-buffer-after-create-hook 'evil-emacs-state)
-  (add-hook 'ecb-methods-buffer-after-create-hook 'evil-emacs-state)
-  (add-hook 'ecb-sources-buffer-after-create-hook 'evil-emacs-state)
+(add-hook 'ecb-directories-buffer-after-create-hook 'evil-emacs-state)
+(add-hook 'ecb-methods-buffer-after-create-hook 'evil-emacs-state)
+(add-hook 'ecb-sources-buffer-after-create-hook 'evil-emacs-state)
 
+; Ecb customization
 (setq stack-trace-on-error t)
-(setq ecb-tip-of-the-day nil)
+(setq ecb-tip-of-the-day t)
 (setq ecb-auto-activate t)
 (setq ecb-layout-name "left6")
 (setq ecb-options-version "2.40")
 (setq ecb-source-path (quote ("~/")))
 
-; Debug on error
-;;(setq debug-on-error t)
 
 ; Nav
 ;(add-to-list 'load-path "~/.emacs.d/emacs-nav/")
@@ -660,8 +660,6 @@ message-mode text-mode))
 
 ;;(require 'imenu-tree)
 (add-hook 'python-mode-hook 'outline-minor-mode)
-(setq projectile-enable-caching t)
-(add-hook 'python-mode-hook 'projectile-on)
 
 ; Jedi
 (setq jedi:setup-keys t)
@@ -675,16 +673,26 @@ message-mode text-mode))
 
 (require 'grep+)
 
-
 ; Comment
 (global-set-key (kbd "C-:") 'comment-dwim-line)
-
 
 (add-hook 'python-mode-hook 'my-python-customizations)
 
 (defun my-python-customizations ()
-    (define-key evil-normal-state-map " " 'jedi:goto-definition)
+    ;; (define-key evil-normal-state-map " " 'jedi:goto-definition)
+    (define-key evil-normal-state-map [return] 'jedi:goto-definition)
     (define-key evil-normal-state-map [backspace] 'pop-global-mark)
     (define-key python-mode-map (kbd "C-c C-d") 'add-docstring)
     (define-key python-mode-map (kbd "<tab>") 'jedi:complete)
+    (setq projectile-enable-caching t)
+    (projectile-on)
 )
+
+(setq jedi:server-args
+      '("--sys-path" "/Users/gennad/z/zvq"))
+
+; Recent files
+(require 'recentf)
+(recentf-mode 1)
+(setq recentf-max-menu-items 25)
+(global-set-key "\C-x\ \C-r" 'recentf-open-files)
