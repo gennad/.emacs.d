@@ -1,4 +1,5 @@
 (setq ipython-command "/usr/bin/ipython")
+(setq python-python-command "/usr/bin/python")
 (package-initialize)
 
 ; No toolbar in full screen
@@ -78,6 +79,7 @@
  '(ediff-window-setup-function (quote ediff-setup-windows-plain))
  '(evil-search-module (quote evil-search))
  '(org-agenda-files (quote ("~/org/1.org")))
+ '(python-shell-interpreter "python")
  '(save-place t nil (saveplace)))
 
 ;; Save desktop (all opened files)
@@ -129,7 +131,7 @@ Uses `vc.el' or `rcs.el' depending on `ediff-version-control-package'."
 ;; Set font
 (load-theme 'zenburn t)
 (set-face-attribute 'default nil :height 145 :weight 'normal)
-(set-default-font "Inconsolata-18")
+(set-default-font "Inconsolata-16")
 
 (defun toggle-window-split ()
   (interactive)
@@ -696,3 +698,5 @@ message-mode text-mode))
 (recentf-mode 1)
 (setq recentf-max-menu-items 25)
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
+
+(setenv "PATH" (concat ".:/usr/local/bin" (getenv "PATH")))
